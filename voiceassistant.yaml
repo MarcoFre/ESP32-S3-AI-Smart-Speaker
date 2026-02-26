@@ -1,4 +1,5 @@
-# -------- Identity --------
+substitutions:
+  # -------- Identity --------
   hostname: "voice-assist-03"
   friendly: "HA Voice Assist O3"
 
