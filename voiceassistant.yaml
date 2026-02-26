@@ -1,0 +1,1031 @@
+# -------- Identity --------
+  hostname: "voice-assist-03"
+  friendly: "HA Voice Assist O3"
+
+  # -------- WiFi --------
+  ip:         "192.168.31.157"
+  gateway:    "192.168.31.1"
+  subnet:     "255.255.255.0"
+  dns:        "192.168.1.1"
+
+  # -------- LED ring --------
+  led_pin:    "GPIO38"
+  led_count:  "7"
+
+  # -------- PIN AUDIO/DISPLAY --------
+  i2c_sda:    "GPIO11"
+  i2c_scl:    "GPIO10"
+  i2s_mclk:   "GPIO12"
+  i2s_bclk:   "GPIO13"
+  i2s_lrclk:  "GPIO14"
+  i2s_din:    "GPIO16"
+  i2s_dout:   "GPIO15"
+
+  # -------- LED Ring effects --------
+  led_rotate_ms:  "70ms"
+  led_standby_ms: "40ms"
+
+  # Standby (two dots)
+  standby_speed_ms: "90"
+  standby_gap:  "3"
+  standby_r1:   "120"
+  standby_g1:   "0"
+  standby_b1:   "120"
+  standby_r2:   "50"
+  standby_g2:   "0"
+  standby_b2:   "50"
+
+  # Listening dot + background
+  listen_fg_r:  "0"
+  listen_fg_g:  "200"
+  listen_fg_b:  "0"
+  listen_bg_r:  "0"
+  listen_bg_g:  "0"
+  listen_bg_b:  "60"
+
+  # Thinking
+  think_fg_r:   "200"
+  think_fg_g:   "0"
+  think_fg_b:   "20"
+  think_bg_r:   "0"
+  think_bg_g:   "0"
+  think_bg_b:   "60"
+
+  # Speaking
+  speak_fg_r:   "255"
+  speak_fg_g:   "200"
+  speak_fg_b:   "0"
+  speak_bg_r:   "120"
+  speak_bg_g:   "0"
+  speak_bg_b:   "0"
+
+  # Error
+  err_fg_r:   "255"
+  err_fg_g:   "0"
+  err_fg_b:   "0"
+  err_bg_r:   "10"
+  err_bg_g:   "0"
+  err_bg_b:   "0"
+
+  # -------- Voice Assistant Phases --------
+  voice_assist_idle_phase_id:           "1"
+  voice_assist_listening_phase_id:      "2"
+  voice_assist_thinking_phase_id:       "3"
+  voice_assist_replying_phase_id:       "4"
+  voice_assist_not_ready_phase_id:      "10"
+  voice_assist_error_phase_id:          "11"
+  voice_assist_muted_phase_id:          "12"
+  voice_assist_timer_finished_phase_id: "20"
+
+esphome:
+  name: ${hostname}
+  friendly_name: ${friendly}
+  project:
+    name: Waveshare HackMyHome.VoiceAssist
+    version: '0.0.1'
+  on_boot:
+    priority: 600
+    then:
+      - logger.log:
+          level: INFO
+          format: "=== BOOT START"
+      - logger.log:
+          level: INFO
+          format: "=== BOOT END"
+
+  on_shutdown:
+    then:
+      - logger.log:
+          level: INFO
+          format: "SHUTDOWN"
+
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: esp-idf
+    version: recommended
+    sdkconfig_options:
+      CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
+      CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
+      CONFIG_ESP32S3_INSTRUCTION_CACHE_32KB: "y"
+      CONFIG_SPIRAM_RODATA: "y"
+      CONFIG_SPIRAM_FETCH_INSTRUCTIONS: "y"
+      CONFIG_BT_ALLOCATION_FROM_SPIRAM_FIRST: "y"
+      CONFIG_BT_BLE_DYNAMIC_ENV_MEMORY: "y"
+      CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y"
+      CONFIG_MBEDTLS_SSL_PROTO_TLS1_3: "y"
+      CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: "y"
+
+logger:
+  level: INFO
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+wifi:
+  ssid: "SSID"
+  password: "PASSWORD"
+  fast_connect: true
+  manual_ip:
+    static_ip: ${ip}
+    gateway: ${gateway}
+    subnet: ${subnet}
+    dns1: ${dns}
+    dns2: 8.8.8.8
+  ap:
+    ssid: "${friendly} Fallback"
+    password: "PASSWORD"
+  on_connect:
+    then:
+      - logger.log:
+          level: INFO
+          format: "==== WiFi CONNECTED"
+      - light.turn_on:
+          id: led_ring
+          effect: "WiFi Blink"
+      - delay: 2s
+      - light.turn_on:
+          id: led_ring
+          effect: "Idle"
+  on_disconnect:
+    then:
+      - logger.log:
+          level: INFO
+          format: "==== WiFi DISCONNECTED"
+      - light.turn_on:
+          id: led_ring
+          effect: "Error Blink"
+
+api:
+  encryption:
+    key: "CiNgQqOfbti7EO2MJWx+lGptEgBe9O2YHfdgdts26U4="
+  on_client_connected: 
+    then:
+      - logger.log:
+          level: INFO
+          format: "==== API CONNECTED"
+      - light.turn_on:
+          id: led_ring
+          effect: "API Blink"
+      - delay: 2s
+      - light.turn_on:
+          id: led_ring
+          effect: "Idle"
+      - if:
+          condition:
+            not:
+              micro_wake_word.is_running
+          then:
+            - micro_wake_word.start:
+            - delay: 50ms
+            - logger.log:
+                level: INFO
+                format: "==== WAKEWORD STARTED"
+
+  on_client_disconnected: 
+    then:
+      - logger.log:
+          level: INFO
+          format: "==== API DISCONNECTED"
+      - light.turn_on:
+          id: led_ring
+          effect: "Error Blink"
+
+ota:
+  - platform: esphome
+    password: "777947954e176a894bb4402f586e789c"
+
+captive_portal:
+
+globals:
+  - id: init_in_progress
+    type: bool
+    restore_value: false
+    initial_value: "false"
+  - id: wifi_ok
+    type: bool
+    restore_value: false
+    initial_value: "false"
+  - id: api_ok
+    type: bool
+    restore_value: false
+    initial_value: "false"
+  - id: wifi_flash_until
+    type: uint32_t
+    restore_value: false
+    initial_value: "0"
+  - id: api_flash_until
+    type: uint32_t
+    restore_value: false
+    initial_value: "0"
+  - id: voice_assistant_phase
+    type: int
+    restore_value: false
+    initial_value: ${voice_assist_not_ready_phase_id}
+  - id: ts_va_listening_ms
+    type: uint32_t
+    restore_value: false
+    initial_value: '0'
+  - id: ts_va_vad_end_ms
+    type: uint32_t
+    restore_value: false
+    initial_value: '0'
+  - id: ts_va_stt_end_ms
+    type: uint32_t
+    restore_value: false
+    initial_value: '0'
+  - id: ts_va_tts_start_ms
+    type: uint32_t
+    restore_value: false
+    initial_value: '0'
+  - id: ts_va_reply_done_ms
+    type: uint32_t
+    restore_value: false
+    initial_value: '0'
+  - id: ts_va_end_ms
+    type: uint32_t
+    restore_value: false
+    initial_value: '0'
+  - id: question
+    type: std::string
+    restore_value: no
+    initial_value: '""'
+  - id: answer
+    type: std::string
+    restore_value: no
+    initial_value: '""'
+
+# LED colors runtime (foreground/background for VA Rotate)
+  - id: fg_r
+    type: int
+    initial_value: "0"
+  - id: fg_g
+    type: int
+    initial_value: "0"
+  - id: fg_b
+    type: int
+    initial_value: "0"
+  - id: bg_r
+    type: int
+    initial_value: "0"
+  - id: bg_g
+    type: int
+    initial_value: "0"
+  - id: bg_b
+    type: int
+    initial_value: "0"
+
+script:
+  - id: control_leds
+    mode: restart
+    then:
+      - logger.log:
+          level: INFO
+          format: "==== CONTROL LED: %d"
+          args: ['id(voice_assistant_phase)']
+      - if:
+          condition:
+            lambda: return id(voice_assistant_phase) == ${voice_assist_idle_phase_id};
+          then:
+            - script.execute: led_waiting_wake
+      - if:
+          condition:
+            lambda: return id(voice_assistant_phase) == ${voice_assist_listening_phase_id};
+          then:
+            - script.execute: led_listening
+      - if:
+          condition:
+            lambda: return id(voice_assistant_phase) == ${voice_assist_thinking_phase_id};
+          then:
+            - script.execute: led_thinking
+      - if:
+          condition:
+            lambda: return id(voice_assistant_phase) == ${voice_assist_replying_phase_id};
+          then:
+            - script.execute: led_speaking
+
+  - id: led_waiting_wake
+    then:
+      - light.turn_on:
+          id: led_ring
+          brightness: 55%
+          effect: "VA Standby"
+
+  - id: led_listening
+    then:
+      - lambda: |-
+          id(fg_r)=${listen_fg_r}; id(fg_g)=${listen_fg_g}; id(fg_b)=${listen_fg_b};
+          id(bg_r)=${listen_bg_r}; id(bg_g)=${listen_bg_g}; id(bg_b)=${listen_bg_b};
+      - light.turn_on:
+          id: led_ring
+          brightness: 70%
+          effect: "VA Rotate"
+
+  - id: led_thinking
+    then:
+      - lambda: |-
+          id(fg_r)=${think_fg_r}; id(fg_g)=${think_fg_g}; id(fg_b)=${think_fg_b};
+          id(bg_r)=${think_bg_r}; id(bg_g)=${think_bg_g}; id(bg_b)=${think_bg_b};
+      - light.turn_on:
+          id: led_ring
+          brightness: 70%
+          effect: "VA Rotate"
+
+  - id: led_speaking
+    then:
+      - lambda: |-
+          id(fg_r)=${speak_fg_r}; id(fg_g)=${speak_fg_g}; id(fg_b)=${speak_fg_b};
+          id(bg_r)=${speak_bg_r}; id(bg_g)=${speak_bg_g}; id(bg_b)=${speak_bg_b};
+      - light.turn_on:
+          id: led_ring
+          brightness: 75%
+          effect: "VA Rotate"
+          
+  - id: va_timing_report
+    mode: restart
+    then:
+      - lambda: |-
+          auto ms_to_s = [](uint32_t ms) -> float { return ((float) ms) / 1000.0f; };
+
+          const uint32_t t_listen = id(ts_va_listening_ms);
+          const uint32_t t_vad    = id(ts_va_vad_end_ms);
+          const uint32_t t_stt    = id(ts_va_stt_end_ms);       // "ha capito cosa chiedo"
+          const uint32_t t_tts    = id(ts_va_tts_start_ms);
+          const uint32_t t_done   = id(ts_va_reply_done_ms);    // fine parlato reale
+          const uint32_t t_end    = id(ts_va_end_ms);           // fine on_end (cleanup)
+
+          // Report principale: STT_END -> SPEECH_END
+          if (t_stt == 0 || t_tts == 0 || t_done == 0 || t_done <= t_stt || t_tts < t_stt) {
+            ESP_LOGI("va_timing", "VA Timing: incomplete (stt=%u tts=%u done=%u)", t_stt, t_tts, t_done);
+            return;
+          }
+
+          const uint32_t total_ms = t_done - t_stt;
+          const uint32_t think_ms = t_tts - t_stt;
+          const uint32_t speak_ms = t_done - t_tts;
+
+          auto pct = [&](uint32_t part_ms) -> float {
+            return (total_ms > 0) ? (100.0f * ((float) part_ms) / (float) total_ms) : 0.0f;
+          };
+
+          ESP_LOGI("va_timing", "=== VA Timing Report (STT_END -> SPEECH_END) ===");
+          ESP_LOGI("va_timing", "Total: %.2fs", ms_to_s(total_ms));
+          ESP_LOGI("va_timing", "Thinking (STT_END->TTS_START): %.2fs (%.1f%%)", ms_to_s(think_ms), pct(think_ms));
+          ESP_LOGI("va_timing", "Speaking (TTS_START->SPEECH_END): %.2fs (%.1f%%)", ms_to_s(speak_ms), pct(speak_ms));
+
+          // Extra (non inclusi nel totale richiesto, ma utili per debug)
+          if (t_listen && t_vad && t_vad > t_listen) {
+            ESP_LOGI("va_timing", "Pre: Listening->VAD_END: %.2fs", ms_to_s(t_vad - t_listen));
+          }
+          if (t_vad && t_stt && t_stt > t_vad) {
+            ESP_LOGI("va_timing", "Pre: VAD_END->STT_END: %.2fs", ms_to_s(t_stt - t_vad));
+          }
+          if (t_end && t_end > t_done) {
+            ESP_LOGI("va_timing", "Post: SPEECH_END->END(cleanup): %.2fs", ms_to_s(t_end - t_done));
+          }
+
+          ESP_LOGI("va_timing", "==============================================");
+
+# --- I2C per codec (ES8311/ES7210) ---
+i2c:
+  id: bus_i2c
+  sda: ${i2c_sda}
+  scl: ${i2c_scl}
+  scan: true
+  frequency: 100kHz
+
+# --- I2S bus ---
+i2s_audio:
+  - id: bus_i2s
+    i2s_mclk_pin: ${i2s_mclk}
+    i2s_bclk_pin: ${i2s_bclk}
+    i2s_lrclk_pin: ${i2s_lrclk}
+
+# Expander della board (EXIO0..EXIO15) — serve per PA_EN (EXIO8)
+tca9555:
+  - id: exio
+    # se nei log lo vedi diverso, cambia qui
+    address: 0x20
+
+switch:
+  - platform: gpio
+    id: ampli_sil
+    name: "Silenzioso"
+    pin:
+      tca9555: exio
+      number: 8
+      mode: OUTPUT
+    restore_mode: ALWAYS_OFF
+    inverted: yes
+
+button:
+  - platform: restart
+    id: btn_reboot
+    name: "Reboot ESP"
+    entity_category: diagnostic
+    icon: mdi:restart
+
+  - platform: safe_mode
+    id: btn_safe_boot
+    name: "Safe Boot (Modalità provvisoria)"
+    entity_category: diagnostic
+    icon: mdi:shield-alert
+
+text_sensor:
+  - id: text_request
+    platform: template
+    on_value:
+      lambda: |-
+        if(id(text_request).state.length()>32) {
+          std::string name = id(text_request).state.c_str();
+          std::string truncated = esphome::str_truncate(name.c_str(),31);
+          id(text_request).state = (truncated+"...").c_str();
+        }
+
+  - id: text_response
+    platform: template
+    on_value:
+      lambda: |-
+        if(id(text_response).state.length()>32) {
+          std::string name = id(text_response).state.c_str();
+          std::string truncated = esphome::str_truncate(name.c_str(),31);
+          id(text_response).state = (truncated+"...").c_str();
+        }
+
+audio_adc:
+  - platform: es7210
+    id: adc_es7210
+    i2c_id: bus_i2c
+    address: 0x40          # default ES7210
+    sample_rate: 16000
+    bits_per_sample: 16bit
+    mic_gain: 24db
+
+microphone:
+  - platform: i2s_audio
+    id: box_mic
+    i2s_audio_id: bus_i2s
+    adc_type: external
+    # MIC DATA verso ESP (sulla tua config attuale è l’altro filo: usa l’opposto del tuo speaker out)
+    i2s_din_pin: ${i2s_dout}
+    sample_rate: 16000
+    bits_per_sample: 16bit
+    channel: right
+    pdm: false
+
+# DAC codec (ES8311)
+audio_dac:
+  - platform: es8311
+    id: dac
+    # tipico ES8311: 0x18 (ma lo confermi con lo scan I2C)
+    address: 0x18
+
+speaker:
+  # Speaker fisico I2S (come lo stai già usando)
+  - platform: i2s_audio
+    id: spk_hw
+    i2s_audio_id: bus_i2s
+    dac_type: external
+    i2s_dout_pin: ${i2s_din}     # <-- NON cambio, visto che da te funziona
+    audio_dac: dac
+    channel: mono
+    sample_rate: 48000
+    bits_per_sample: 16bit
+    buffer_duration: 100ms
+
+  # Mixer: unisce "media" + "announcement" sullo stesso speaker fisico
+  - platform: mixer
+    id: spk_mixer
+    output_speaker: spk_hw
+    source_speakers:
+      - id: ann_mixer_in
+      - id: media_mixer_in
+
+  # Resampler per garantire stesso sample rate nei due ingressi del mixer
+  - platform: resampler
+    id: ann_spk
+    output_speaker: ann_mixer_in
+    sample_rate: 48000
+
+  - platform: resampler
+    id: media_spk
+    output_speaker: media_mixer_in
+    sample_rate: 48000
+
+media_player:
+  - platform: speaker
+    id: va_player
+    name: "Media Player"
+    volume_increment: 5%
+    task_stack_in_psram: true
+
+    media_pipeline:
+      speaker: media_spk
+      format: FLAC
+      sample_rate: 48000
+      num_channels: 1
+
+    announcement_pipeline:
+      speaker: ann_spk
+      format: FLAC
+      sample_rate: 48000
+      num_channels: 1
+
+    # Duck audio "media" mentre parte un annuncio (TTS/VA/timer/etc)
+    on_announcement:
+      then:
+        - logger.log:
+            level: INFO
+            format: "==== MEDIAPLAYER: ANNOUNCEMENT"
+        - light.turn_on:
+            id: led_ring
+            effect: "Pause Blink"        
+        - mixer_speaker.apply_ducking:
+            id: media_mixer_in
+            decibel_reduction: 18
+            duration: 0s
+        # Aspetta che finisca l'annuncio
+        - wait_until:
+            condition:
+              not:
+                - media_player.is_announcing: va_player
+            timeout: 30s
+        # Rilascia ducking gradualmente
+        - mixer_speaker.apply_ducking:
+            id: media_mixer_in
+            decibel_reduction: 0
+            duration: 1.2s    
+    on_pause: 
+      then:
+        - logger.log:
+            level: INFO
+            format: "==== MEDIAPLAYER: PAUSE"
+        - light.turn_on:
+            id: led_ring
+            effect: "Pause Blink"        
+        - if:
+            condition:
+              not:
+                - micro_wake_word.is_running:
+            then:
+              - micro_wake_word.start:
+              - delay: 50ms
+              - logger.log:
+                  level: INFO
+                  format: "==== MEDIAPLAYER: PAUSE -> Start WakeWord"
+              - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
+              - script.execute: control_leds
+
+    on_play: 
+      then:
+        - if:
+            condition:
+              - micro_wake_word.is_running:
+            then:
+              - micro_wake_word.stop:
+              - delay: 50ms
+              - logger.log:
+                  level: INFO
+                  format: "==== MEDIAPLAYER: PLAY -> Stop WakeWord"
+        - light.turn_on:
+            id: led_ring
+            effect: "Play"        
+        - logger.log:
+            level: INFO
+            format: "==== MEDIAPLAYER: PLAY"
+
+micro_wake_word:
+  id: mww
+  # se vuoi sempre attivo: true/false cambia poco, qui lo gestiamo noi con start/stop
+  stop_after_detection: true
+  microphone:
+    microphone: box_mic
+    channels: 0
+    gain_factor: 4
+
+  models:
+    - model: hey_jarvis
+      id: hey_jarvis
+    - model: https://raw.githubusercontent.com/TaterTotterson/microWakeWords/refs/heads/main/microWakeWords/hey_aowurrah.json
+      id: hey_aowurrah
+    - model: https://raw.githubusercontent.com/TaterTotterson/microWakeWords/refs/heads/main/microWakeWords/hey_aura.json
+      id: hey_aura
+
+  on_wake_word_detected:
+    - logger.log:
+        level: INFO
+        format: "==== mWW DETECTED: %s ===="
+        args: [ 'wake_word.c_str()' ]
+    - micro_wake_word.stop:
+    - delay: 50ms
+    - voice_assistant.start_continuous:
+    - logger.log:
+        level: INFO
+        format: "==== VOICE ASSISTANT: STARTED"
+
+voice_assistant:
+  id: va
+  microphone: box_mic
+  media_player: va_player
+  micro_wake_word: mww
+
+  noise_suppression_level: 2
+  auto_gain: 31dBFS
+  volume_multiplier: 1.0
+
+  on_listening:
+    - lambda: id(ts_va_listening_ms) = millis();
+    - logger.log:
+        level: INFO
+        format: "==== VoiceAssistant: LISTENING (t=%u ms)"
+        args: ['(unsigned) id(ts_va_listening_ms)']
+    - lambda: id(voice_assistant_phase) = ${voice_assist_listening_phase_id};
+    - text_sensor.template.publish:
+        id: text_request
+        state: "..."
+    - text_sensor.template.publish:
+        id: text_response
+        state: "..."
+    - script.execute: control_leds
+  on_stt_vad_end:
+    - lambda: id(ts_va_vad_end_ms) = millis();
+    - logger.log:
+        level: INFO
+        format: "==== VoiceAssistant: STT VAD END (t=%u ms)"
+        args: ['(unsigned) id(ts_va_vad_end_ms)']
+    - lambda: id(voice_assistant_phase) = ${voice_assist_thinking_phase_id};
+    - script.execute: control_leds
+  on_stt_end:
+    - lambda: |-
+        id(question) = x.c_str();
+        id(ts_va_stt_end_ms) = millis();
+    - logger.log:
+        level: INFO
+        format: "==== VoiceAssistant: STT END (t=%u ms)"
+        args: ['(unsigned) id(ts_va_stt_end_ms)']
+    - logger.log:
+        level: INFO
+        format: "==== VoiceAssistant - Question: %s"
+        args: ['id(question).c_str()']
+    - text_sensor.template.publish:
+        id: text_request
+        state: !lambda return x;
+    - if:
+        condition:
+          lambda: |-
+            std::string t = id(question).c_str();
+            for (auto &c : t) c = tolower((unsigned char)c);
+            return (t.find("silenziosa") != std::string::npos);
+        then:
+          - delay: 500ms
+          - voice_assistant.stop
+          - logger.log:
+              level: INFO
+              format: "==== Modalita Silenziosa: Voice Assistant: Stop"
+          - micro_wake_word.start:
+          - delay: 50ms
+          - logger.log:
+              level: INFO
+              format: "==== Modalita Silenziosa: WakeWord: Start"
+          - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
+    - script.execute: control_leds
+  on_tts_start:
+    - lambda: |-
+        id(answer) = x.c_str();
+        id(ts_va_tts_start_ms) = millis();
+    - logger.log:
+        level: INFO
+        format: "==== VoiceAssistant: TTS START (t=%u ms)"
+        args: ['(unsigned) id(ts_va_tts_start_ms)']
+    - logger.log:
+        level: INFO
+        format: "==== VoiceAssistant - Answer %s"
+        args: ['id(answer).c_str()']
+    - text_sensor.template.publish:
+        id: text_response
+        state: !lambda return x;
+    - lambda: id(voice_assistant_phase) = ${voice_assist_replying_phase_id};
+    # "modalità silenziosa" -> esci
+    - if:
+        condition:
+          lambda: |-
+            std::string t = x;
+            for (auto &c : t) c = tolower((unsigned char)c);
+            return (t.find("modalità silenziosa") != std::string::npos);
+        then:
+          - delay: 500ms
+          - voice_assistant.stop
+          - logger.log:
+              level: INFO
+              format: "==== Modalita Silenziosa: Voice Assistant: Stop"
+          - micro_wake_word.start:
+          - delay: 50ms
+          - logger.log:
+              level: INFO
+              format: "==== Modalita Silenziosa: WakeWord: Start"
+          - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
+    - script.execute: control_leds
+  on_end:
+    - lambda: id(ts_va_reply_done_ms) = millis();
+    - logger.log:
+        level: INFO
+        format: "==== VoiceAssistant: END (t=%u ms)"
+        args: ['(unsigned) id(ts_va_reply_done_ms)']
+  on_error:
+    - logger.log:
+        level: ERROR
+        format: "==== VoiceAssistant: ERROR: %s - %s"
+        args: [ 'code.c_str()', 'message.c_str()' ]
+    # Se è solo "no text", non andare in errore
+    - if:
+        condition:
+          lambda: return code == "stt-no-text-recognized";
+        then:
+          - logger.log:
+              level: INFO
+              format: "==== VoiceAssistant: no-text -> Stop&Start"
+          - if:
+              condition:
+                - micro_wake_word.is_running:
+              then:
+                - micro_wake_word.stop:
+                - delay: 50ms
+                - logger.log:
+                    level: INFO
+                    format: "==== VoiceAssistant: no-text -> Stop WakeWord"
+          - if:
+              condition:
+                - voice_assistant.is_running:
+              then:
+                - voice_assistant.stop
+                - delay: 500ms
+                - logger.log:
+                    level: INFO
+                    format: "==== VoiceAssistant: no-text -> Stop Voice Assistant"
+          - logger.log:
+              level: INFO
+              format: "==== VoiceAssistant: no-text -> Start"
+          - voice_assistant.start_continuous
+          - lambda: id(voice_assistant_phase) = ${voice_assist_listening_phase_id};
+          - script.execute: control_leds
+        else:
+          # Se è "intent-failed - Unexpected error during intent recognition", restart
+          - if:
+              condition:
+                lambda: return code == "intent-failed";
+              then:
+                - logger.log:
+                    level: INFO
+                    format: "==== VoiceAssistant: intent error -> Stop&Start"
+                - if:
+                    condition:
+                      - micro_wake_word.is_running:
+                    then:
+                      - micro_wake_word.stop:
+                      - delay: 50ms
+                      - logger.log:
+                          level: INFO
+                          format: "==== VoiceAssistant: intent-error -> Stop WakeWord"
+                - if:
+                    condition:
+                      - voice_assistant.is_running:
+                    then:
+                      - voice_assistant.stop
+                      - delay: 500ms
+                      - logger.log:
+                          level: INFO
+                          format: "==== VoiceAssistant: intent-error -> Stop Voice Assistant"
+                - logger.log:
+                    level: INFO
+                    format: "==== VoiceAssistant: inten-error -> Start"
+                - voice_assistant.start_continuous
+                - lambda: id(voice_assistant_phase) = ${voice_assist_listening_phase_id};
+                - script.execute: control_leds
+        # qui lasci la tua gestione "vera" degli errori
+    - if:
+        condition:
+          lambda: return !id(init_in_progress);
+        then:
+          - lambda: id(voice_assistant_phase) = ${voice_assist_error_phase_id};
+
+  on_client_connected:
+    - logger.log:
+        level: INFO
+        format: "==== VoiceAssistant: CLIENT CONNECTED ===="
+    - lambda: id(init_in_progress) = false;
+    - script.execute: control_leds
+  on_client_disconnected:
+    - logger.log:
+        level: INFO
+        format: "==== VoiceAssistant: DISCONNECTED ===="
+    - lambda: id(voice_assistant_phase) = ${voice_assist_not_ready_phase_id};
+    - script.execute: control_leds
+  on_timer_started:
+    - logger.log:
+        level: INFO
+        format: "==== VoiceAssistant: TIMER STARTED ===="
+    - script.execute: control_leds
+  on_timer_cancelled:
+    - logger.log:
+        level: INFO
+        format: "==== VoiceAssistant: TIMER CANCELLED ===="
+    - script.execute: control_leds
+  on_timer_updated:
+    - logger.log:
+        level: INFO
+        format: "==== VoiceAssistant: TIMER UPDATED ===="
+    - script.execute: control_leds
+  on_timer_tick:
+    - logger.log:
+        level: INFO
+        format: "==== VoiceAssistant: TIMER TICK ===="
+    - script.execute: control_leds
+  on_timer_finished:
+    - logger.log:
+        level: INFO
+        format: "==== VoiceAssistant: TIMER FINISHED ===="
+    - wait_until:
+        media_player.is_announcing:
+    - lambda: id(voice_assistant_phase) = ${voice_assist_timer_finished_phase_id};
+    - script.execute: control_leds
+
+light:
+  - platform: esp32_rmt_led_strip
+    chipset: WS2812
+    rgb_order: RGB
+    id: led_ring
+    name: "LED Ring"
+    pin: ${led_pin}
+    num_leds: ${led_count}
+    restore_mode: ALWAYS_ON
+    default_transition_length: 0s
+    effects:
+      - addressable_lambda:
+          name: "Idle"
+          update_interval: 70ms
+          lambda: |-
+            static int pos = 0;
+            const int N = it.size();
+            // background blu soft
+            for (int i=0;i<N;i++) it[i] = Color(0, 0, 100);
+            // dot viola
+            it[pos] = Color(100, 0, 100);
+            pos = (pos + 1) % N;
+      - addressable_lambda:
+          name: "Play"
+          update_interval: 70ms
+          lambda: |-
+            // ====== TUNING ======
+            const float SPEED_LEDS_PER_SEC = 7.0f;          // velocità rotazione
+            const float TAIL_LEDS          = 2*it.size()/3; // coda (in led)
+            const float TRANSITION_SEC     = 2.2f;          // durata crossfade colore
+            const float SAT                = 0.95f;         // saturazione colori
+            const float VAL                = 1.00f;         // luminosità colori
+            // =====================
+            auto smoothstep = [](float x) -> float {
+              x = (x < 0.0f) ? 0.0f : (x > 1.0f ? 1.0f : x);
+              return x * x * (3.0f - 2.0f * x);
+            };
+            auto hsv_to_rgb = [](float h, float s, float v) -> Color {
+              h = fmodf(h, 360.0f);
+              if (h < 0) h += 360.0f;
+              float c = v * s;
+              float x = c * (1.0f - fabsf(fmodf(h / 60.0f, 2.0f) - 1.0f));
+              float m = v - c;
+              float rp=0, gp=0, bp=0;
+              if      (h < 60)  { rp=c; gp=x; bp=0; }
+              else if (h < 120) { rp=x; gp=c; bp=0; }
+              else if (h < 180) { rp=0; gp=c; bp=x; }
+              else if (h < 240) { rp=0; gp=x; bp=c; }
+              else if (h < 300) { rp=x; gp=0; bp=c; }
+              else              { rp=c; gp=0; bp=x; }
+              uint8_t r = (uint8_t) ((rp + m) * 255.0f);
+              uint8_t g = (uint8_t) ((gp + m) * 255.0f);
+              uint8_t b = (uint8_t) ((bp + m) * 255.0f);
+              return Color(r, g, b);
+            };
+            auto lerp_color = [](const Color &a, const Color &b, float t) -> Color {
+              t = (t < 0.0f) ? 0.0f : (t > 1.0f ? 1.0f : t);
+              uint8_t r = (uint8_t) (a.red   + (b.red   - a.red)   * t);
+              uint8_t g = (uint8_t) (a.green + (b.green - a.green) * t);
+              uint8_t b2= (uint8_t) (a.blue  + (b.blue  - a.blue)  * t);
+              return Color(r, g, b2);
+            };
+            auto random_nice_color = [&]() -> Color {
+              float hue = (float)(random_uint32() % 360);
+              return hsv_to_rgb(hue, SAT, VAL);
+            };
+            static bool init = false;
+            static uint32_t last_ms = 0;
+            static float pos = 0.0f;            // posizione cometa
+            static float tcol = 0.0f;           // 0..1 progress transizione colore
+            static Color c_from(255, 0, 0);
+            static Color c_to(0, 255, 255);
+            uint32_t now = millis();
+            float dt = 0.0f;
+            if (last_ms != 0) dt = (now - last_ms) / 1000.0f;
+            last_ms = now;
+            if (!init) {
+              c_from = random_nice_color();
+              c_to   = random_nice_color();
+              init = true;
+            }
+            // Avanza posizione
+            if (dt > 0.0f) {
+              pos += SPEED_LEDS_PER_SEC * dt;
+              float n = (float) it.size();
+              pos = fmodf(pos, n);
+              if (pos < 0) pos += n;
+            }
+            // Transizione colore
+            if (dt > 0.0f) tcol += dt / TRANSITION_SEC;
+            if (tcol >= 1.0f) {
+              tcol = 0.0f;
+              c_from = c_to;
+              c_to = random_nice_color();
+            }
+            float e = smoothstep(tcol);
+            Color c = lerp_color(c_from, c_to, e);
+            // Disegna cometa con coda (wrap su anello)
+            int n = it.size();
+            for (int i = 0; i < n; i++) {
+              float d = fabsf((float)i - pos);
+              d = fminf(d, (float)n - d);   // distanza su anello (wrap)
+              float b = 1.0f - (d / TAIL_LEDS);
+              if (b < 0.0f) b = 0.0f;
+              b = b * b; // morbida (easing della coda)
+              it[i] = Color(
+                (uint8_t)(c.red   * b),
+                (uint8_t)(c.green * b),
+                (uint8_t)(c.blue  * b)
+              );
+            }
+
+      - addressable_lambda:
+          name: "API Blink"
+          update_interval: 120ms
+          lambda: |-
+            static bool on = false;
+            static uint32_t last = 0;
+            if (millis() - last > 240) { on = !on; last = millis(); }
+            it.all() = on ? Color(255,255,0) : Color(50,50,0);
+      - addressable_lambda:
+          name: "WiFi Blink"
+          update_interval: 120ms
+          lambda: |-
+            static bool on = false;
+            static uint32_t last = 0;
+            if (millis() - last > 240) { on = !on; last = millis(); }
+            it.all() = on ? Color(0,0,255) : Color(0,0,50);
+      - addressable_lambda:
+          name: "Pause Blink"
+          update_interval: 120ms
+          lambda: |-
+            static bool on = false;
+            static uint32_t last = 0;
+            if (millis() - last > 240) { on = !on; last = millis(); }
+            it.all() = on ? Color(0, 255, 255) : Color(0,50,50);
+      - addressable_lambda:
+          name: "Error Blink"
+          update_interval: 120ms
+          lambda: |-
+            static bool on = false;
+            static uint32_t last = 0;
+            if (millis() - last > 240) { on = !on; last = millis(); }
+            it.all() = on ? Color(255,0,0) : Color(50,0,0);
+      - addressable_lambda:
+          name: "Slow Pulse"
+          update_interval: 30ms
+          lambda: |-
+            static float fraction = 0.0f;
+            static float step = 0.03f;
+            static bool up = true;
+            auto v = id(led_ring)->current_values;
+            Color c(v.get_red() * 255, v.get_green() * 255, v.get_blue() * 255);
+            fraction += (step * (up ? 1.0f : -1.0f));
+            if (fraction >= 1.0f) { fraction = 1.0f; up = false; }
+            if (fraction <= 0.0f) { fraction = 0.0f; up = true;  }
+            for (int i = 0; i < it.size(); i++) {
+              it[i] = Color(c.red * fraction, c.green * fraction, c.blue * fraction);
+            }
+      - addressable_lambda:
+          name: "VA Rotate"
+          update_interval: ${led_rotate_ms}
+          lambda: |-
+            static int pos = 0;
+            const int N = it.size();
+            for (int i = 0; i < N; i++) it[i] = Color(id(bg_r), id(bg_g), id(bg_b));
+            it[pos % N] = Color(id(fg_r), id(fg_g), id(fg_b));
+            pos = (pos + 1) % N;
+      - addressable_lambda:
+          name: "VA Standby"
+          update_interval: ${led_standby_ms}
+          lambda: |-
+            const int N = it.size();
+            const uint32_t now = millis();
+            for (int i = 0; i < N; i++) it[i] = Color(0,0,0);
+            int pos1 = (now / ${standby_speed_ms}) % N;
+            int pos2 = (pos1 + ${standby_gap}) % N;
+            it[pos1] = Color(${standby_r1}, ${standby_g1}, ${standby_b1});
+            it[pos2] = Color(${standby_r2}, ${standby_g2}, ${standby_b2});
