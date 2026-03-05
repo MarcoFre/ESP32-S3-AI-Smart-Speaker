@@ -65,3 +65,68 @@ Le opinioni e i test restano indipendenti.
 ### Metodo B — ESPHome CLI
 ```bash
 esphome run voice-assist-03.yaml
+## 🔧 Configurazione iniziale (substitutions)
+
+La parte “personale” del progetto è tutta concentrata nel blocco `substitutions`: qui metti **identità**, **rete**, **pin** e **tuning**.  
+L’idea è semplice: *cloni il progetto su un altro device e cambi solo questi valori*.
+
+### Identity
+- `hostname` → nome tecnico ESPHome (anche hostname di rete)
+- `friendly` → nome “umano” che vedrai in Home Assistant
+
+### Security
+- `password` → password Wi-Fi (se la usi direttamente qui; consigliato spostarla in `secrets.yaml`)
+- `api_key` → chiave di cifratura dell’API ESPHome
+- `ota_key` → password OTA per aggiornare senza cavo
+
+### WiFi
+- `ssid` → nome rete Wi-Fi
+- `ip / gateway / subnet / dns` → IP statico (consigliato per un voice assistant: HA lo trova sempre allo stesso indirizzo)
+
+### LED ring
+- `led_pin` → pin dati WS2812 (di default `GPIO38`)
+- `led_count` → numero LED (qui 7)
+
+### PIN AUDIO/DISPLAY
+- `i2c_sda / i2c_scl` → bus I²C (controllo codec + expander)
+- `i2s_mclk / i2s_bclk / i2s_lrclk` → clock I²S
+- `i2s_din / i2s_dout` → dati audio in/out (codec ↔ ESP32)
+
+### AUDIO TUNING
+- `sample_rate` → sample rate uscita audio (tipico `48000`)
+- `bits_per_sample` → profondità (tipico `16bit`)
+- `auto_stop_cycle` → quante “ripartenze” dopo `stt-no-text-recognized` prima di tornare idle
+
+### LED Ring effects (timing + palette)
+Qui imposti sia la **velocità** delle animazioni sia i **colori** dei vari stati.
+
+**Timing**
+- `led_rotate_ms` → velocità rotazione “listening”
+- `led_standby_ms` → velocità standby
+
+**Standby (two dots)**
+- `standby_speed_ms`, `standby_gap`
+- `standby_r1/g1/b1` e `standby_r2/g2/b2` → due pallini con colori diversi
+
+**Listening / Thinking / Speaking / Error**
+- `listen_*` → colore foreground/background in ascolto
+- `think_*` → colore thinking
+- `speak_*` → colore speaking
+- `err_*` → colore error
+
+### Phases (stati numerici)
+Queste costanti sono gli ID che usi per pilotare LED e display in modo leggibile (eviti “numeri magici” sparsi nel codice):
+
+**Device phases**
+- `no_connected`, `connected_wireless`, `connected_wireless_api`
+
+**Voice Assistant phases**
+- `voice_assist_idle_phase_id`, `...listening...`, `...thinking...`, `...replying...`
+- `...not_ready...`, `...error...`, `...muted...`, `...timer_finished...`
+
+**MediaPlayer phases**
+- `mediaplayer_play`, `mediaplayer_pause`, `mediaplayer_stop`
+
+> In breve: `substitutions` è il pannello di controllo del progetto.  
+> Tutto il resto del YAML lavora “a valle” usando questi valori.
+
