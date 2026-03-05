@@ -65,7 +65,7 @@ Le opinioni e i test restano indipendenti.
 ### Metodo B — ESPHome CLI
 ```bash
 esphome run voice-assist-03.yaml
-''''
+
 ```
 ## 🔧 Configurazione iniziale (substitutions)
 
@@ -131,4 +131,164 @@ Queste costanti sono gli ID che usi per pilotare LED e display in modo leggibile
 
 > In breve: `substitutions` è il pannello di controllo del progetto.  
 > Tutto il resto del YAML lavora “a valle” usando questi valori.
+## 🧠 Logica degli stati (globals + control_leds)
 
+Questa configurazione usa una **state machine** semplice ma molto efficace: un singolo intero (`voice_assistant_phase`) rappresenta **lo stato corrente** del device e guida tutto il resto (LED ring, display, avvio/stop wake word, ripristini dopo annunci, ecc.).
+
+### Variabili globali principali
+
+- `voice_assistant_phase`  
+  Stato corrente del dispositivo (offline / wifi / api / idle / listening / thinking / replying / play / mute / error / timer).
+
+- `voice_assistant_phase_prev`  
+  Ultimo stato “utile” prima di un cambio temporaneo (es. annunci o musica). Serve per **tornare allo stato corretto** a fine evento.
+
+- `audio_muted`  
+  Flag mute “logico” (oltre al mute del DAC). Quando è `true`:
+  - la wake word non parte
+  - lo stato diventa **Muted**
+  - i tasti Volume smutano prima di cambiare volume
+
+- Timestamp per misurare performance (ms):
+  - `ts_va_listening_ms`
+  - `ts_va_vad_end_ms`
+  - `ts_va_stt_end_ms`
+  - `ts_va_tts_start_ms`
+  - `ts_va_reply_done_ms`
+  - `ts_va_end_ms`
+
+- `question` / `answer`  
+  Ultima domanda riconosciuta e ultima risposta TTS (per log e display/telemetria).
+
+---
+
+## 🎛️ Avvio/stop Wake Word
+
+La wake word è gestita in modo “controllato” per evitare conflitti audio e falsi trigger:
+
+### `start_wake_word`
+Avvia `micro_wake_word` **solo se**:
+- non sei in mute (`!audio_muted`)
+- il `voice_assistant` non è già in esecuzione
+- `micro_wake_word` non è già in esecuzione
+
+In questo modo, quando il VA sta parlando o la musica è in play, non lasci “ascolto” sempre acceso.
+
+### `stop_wake_word`
+Ferma `micro_wake_word` se è in esecuzione.  
+Viene usato tipicamente quando:
+- parte la musica (`on_play`)
+- parte un annuncio (`on_announcement`)
+- vai offline / perdi API
+- entri in mute
+
+---
+
+## 🧩 `set_idle_or_mute_phase`
+
+Piccolo ma fondamentale: decide lo stato “a riposo” in base al mute.
+
+- se `audio_muted == true` → `voice_assistant_phase = MUTED`
+- altrimenti → `voice_assistant_phase = IDLE`
+
+Serve per ripristinare correttamente lo stato dopo:
+- fine VA
+- fine annuncio
+- pause/stop musica
+
+---
+
+## 🎚️ Il regista: `control_leds`
+
+`control_leds` è lo script centrale che traduce lo stato in **feedback visivo**.
+
+### 1) Log e memorizzazione stato precedente
+All’inizio stampa a log lo stato corrente e, per alcuni stati “buoni”, aggiorna `voice_assistant_phase_prev`.
+
+Viene salvato come “previous” quando lo stato è uno tra:
+- Idle
+- Listening
+- Thinking
+- Replying
+- MediaPlayer Play
+
+Questo evita che stati transitori (offline/error/blink vari) sovrascrivano lo “stato di ritorno”.
+
+### 2) Mappatura stato → effetto LED
+Poi, in base a `voice_assistant_phase`, imposta un effetto sul LED ring:
+
+- **Offline (`no_connected`)** → `Error Blink`
+- **Wi-Fi ok (`connected_wireless`)** → `WiFi Blink`
+- **API ok (`connected_wireless_api`)** → `API Blink`
+- **Not ready** → `Error Blink`
+- **Error** → `Error Blink`
+- **Idle** → esegue `led_waiting_wake` → `VA Standby`
+- **Listening** → esegue `led_listening` → `VA Rotate`
+- **Thinking** → esegue `led_thinking` → `VA Think Pulse`
+- **Replying** → `Play`
+- **Media play** → `Slow Pulse`
+- **Muted** → `Pause Blink`
+- **Timer finished** → `Announce Blink`
+
+---
+
+## 🌈 Stati e LED Ring (mappa rapida)
+
+| Stato | ID | Effetto LED |
+|------|---:|------------|
+| Nessuna connessione | `${no_connected}` (=0) | **Error Blink** |
+| Wi-Fi connesso | `${connected_wireless}` (=1) | **WiFi Blink** |
+| API connessa | `${connected_wireless_api}` (=2) | **API Blink** |
+| Idle | `${voice_assist_idle_phase_id}` (=11) | **VA Standby** |
+| Listening | `${voice_assist_listening_phase_id}` (=12) | **VA Rotate** |
+| Thinking | `${voice_assist_thinking_phase_id}` (=13) | **VA Think Pulse** |
+| Speaking/Replying | `${voice_assist_replying_phase_id}` (=14) | **Play** |
+| Media Play | `${mediaplayer_play}` (=21) | **Slow Pulse** |
+| Muted | `${voice_assist_muted_phase_id}` (=17) | **Pause Blink** |
+| Timer finished | `${voice_assist_timer_finished_phase_id}` (=18) | **Announce Blink** |
+| Error | `${voice_assist_error_phase_id}` (=16) | **Error Blink** |
+
+> Colori e velocità (foreground/background e timing) sono tutti personalizzabili nel blocco `substitutions`.
+
+---
+
+## 🌀 Effetti “VA” (standby / listening / thinking)
+
+### `VA Standby`
+Effetto standby: **due dot** che ruotano, con gap e colori configurabili:
+- velocità: `standby_speed_ms`
+- distanza: `standby_gap`
+- colori: `standby_r1/g1/b1` + `standby_r2/g2/b2`
+
+### `VA Rotate` (Listening)
+Imposta prima i colori (fg/bg) prendendoli da `listen_*` e poi avvia una rotazione singolo dot su background.
+
+### `VA Think Pulse` (Thinking)
+Imposta i colori da `think_*` e crea un pulse su due punti opposti dell’anello.
+
+---
+
+## ⏱️ Timing report (va_timing_report)
+
+A fine conversazione, lo script `va_timing_report` calcola e stampa:
+- **Totale**: STT_END → SPEECH_END
+- **Thinking**: STT_END → TTS_START
+- **Speaking**: TTS_START → SPEECH_END
+e anche i tempi “pre”:
+- listening → VAD_END
+- VAD_END → STT_END
+e “post”:
+- speech_end → end(cleanup)
+
+È utile per capire se il collo di bottiglia è:
+- STT/intent/AI
+- TTS
+- oppure playback / rete / CPU
+
+---
+
+## 🧪 Note pratiche
+
+- Se noti falsi trigger o instabilità audio, la prima leva è **quando avviare/fermiare la wake word** (già gestita da `start_wake_word` / `stop_wake_word`).
+- `voice_assistant_phase_prev` è fondamentale per tornare allo stato giusto dopo annunci/ducking: se aggiungi nuovi stati, valuta se devono aggiornare il `prev`.
+- Tutti i colori e i tempi degli effetti sono centralizzati in `substitutions`, quindi puoi fare tuning senza toccare le lambda.
