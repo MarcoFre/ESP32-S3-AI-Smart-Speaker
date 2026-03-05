@@ -65,7 +65,8 @@ Le opinioni e i test restano indipendenti.
 ### Metodo B — ESPHome CLI
 ```bash
 esphome run voice-assist-03.yaml
----
+''''
+```
 ## 🔧 Configurazione iniziale (substitutions)
 
 La parte “personale” del progetto è tutta concentrata nel blocco `substitutions`: qui metti **identità**, **rete**, **pin** e **tuning**.  
