@@ -7,7 +7,7 @@ Configurazione **ESPHome** per trasformare la **Waveshare ESP32-S3 Audio Board /
 ## 🔗 Link utili
 
 ### 🛒 ESP32-S3 AI Smart Speaker Development Board
-- **Waveshare (reference link):** https://www.waveshare.com/?&aff_id=HackMyHome  
+- **Waveshare (affiliate link):** https://www.waveshare.com/?&aff_id=HackMyHome  
 - **Amazon (affiliate link):** https://amzn.to/40JLOQq
 
 ### 🌐 HackMyHome
@@ -17,7 +17,7 @@ Configurazione **ESPHome** per trasformare la **Waveshare ESP32-S3 Audio Board /
 ---
 
 ## 🤝 Trasparenza (link di supporto)
-Alcuni link (Waveshare/Amazon) possono essere **reference/affiliate link**: se li usi per acquistare, supporti il progetto **senza costi extra** per te.  
+Alcuni link (Waveshare/Amazon) sono **reference/affiliate link**: se li usi per acquistare, supporti il progetto **senza costi extra** per te.  
 Le opinioni e i test restano indipendenti.
 
 ---
