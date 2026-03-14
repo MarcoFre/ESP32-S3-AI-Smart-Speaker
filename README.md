@@ -35,6 +35,10 @@ Le opinioni e i test restano indipendenti.
 - ✅ (Opzionale) **OLED SSD1306** con stato e animazioni (faccina)
 - ✅ **Timing report** in log: tempi di thinking/speaking per capire dove “si perde tempo”
 
+**14.03.2026**: Versione V2
+- ✅ Aggiunta modalità **Risposta Singola/Continuativa** (Voice Assistant)
+- ✅ Aggiunto **feedback sonoro** Wake Word
+- ✅ Aggiunto Timer (es: imposta timer di 10 minuti)
 ---
 
 ## ✅ Requisiti
