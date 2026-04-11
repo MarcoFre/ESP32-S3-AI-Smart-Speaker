@@ -40,11 +40,12 @@ substitutions:
   led_rotate_ms:  "70ms"
   led_standby_ms: "40ms"
 
-  # -------- Sound files --------
-  mute_switch_on_sound_file:      http://192.168.31.182:8123/local/sounds/mute_switch_on.flac
-  mute_switch_off_sound_file:     http://192.168.31.182:8123/local/sounds/mute_switch_off.flac
-  timer_finished_sound_file:      http://192.168.31.182:8123/local/sounds/timer_finished.flac
-  wake_word_triggered_sound_file: http://192.168.31.182:8123/local/sounds/wake_word_triggered.flac
+
+  # -------- Sound file --------
+  mute_switch_on_sound_file:       https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/mute_switch_on.flac
+  mute_switch_off_sound_file:      https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/mute_switch_off.flac
+  timer_finished_sound_file:       https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/timer_finished.flac
+  wake_word_triggered_sound_file:  https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/wake_word_triggered.flac
 
   # -------- Standby (two dots) --------
   standby_speed_ms: "90"
