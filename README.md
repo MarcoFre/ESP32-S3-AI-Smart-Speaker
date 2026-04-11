@@ -10,11 +10,16 @@ Configurazione **ESPHome** per trasformare la **Waveshare ESP32-S3 Audio Board /
 - **Waveshare (affiliate link):** https://www.waveshare.com/?&aff_id=HackMyHome  
 - **Amazon (affiliate link):** https://amzn.to/40JLOQq
 
-### 🌐 HackMyHome
-- **GitHub (repo progetto):** https://github.com/MarcoFre/ESP32-S3-AI-Smart-Speaker/tree/main  
-- **Facebook:** https://www.facebook.com/profile.php?id=61583821941006
+### 🛒 Display 0.96 pollici Display OLED I2C SSD1306 Chip 128 x 64 Pixel I2C (V2 code)
+- **Amazon (affiliate link):** https://amzn.to/4ckoyOk
 
----
+### 🛒 Display LCD IPS da 1,28, scheda PCB nera, LCD IPS HD, driver GC9A01 (V3 code)
+- **Amazon (affiliate link):** https://amzn.to/4vn0eEn
+
+### 🌐 HackMyHome
+- **GitHub (repo progetto):** https://github.com/MarcoFre/ESP32-S3-AI-Smart-Speaker/tree/main
+- **YouTube (HackMyHome):** https://www.youtube.com/@HMH-Aura-Nova
+- **Facebook:** https://www.facebook.com/profile.php?id=61583821941006
 
 ## 🤝 Trasparenza (link di supporto)
 Alcuni link (Waveshare/Amazon) sono **reference/affiliate link**: se li usi per acquistare, supporti il progetto **senza costi extra** per te.  
@@ -32,7 +37,8 @@ Le opinioni e i test restano indipendenti.
 - ✅ **Mixer audio + ducking**: abbassa la musica durante TTS/annunci e ripristina a fine annuncio
 - ✅ **LED ring WS2812 (7 LED)** con stati e animazioni (standby/listening/thinking/speaking/error…)
 - ✅ **Tasti fisici**: volume + / mute / volume –
-- ✅ (Opzionale) **OLED SSD1306** con stato e animazioni (faccina)
+- ✅ (Opzionale V3) **GC9A01A** con stato e animazioni (faccina)
+- ✅ (Opzionale V2) **OLED SSD1306** con stato e animazioni (faccina)
 - ✅ **Timing report** in log: tempi di thinking/speaking per capire dove “si perde tempo”
 
 **14.03.2026**: Versione V2
