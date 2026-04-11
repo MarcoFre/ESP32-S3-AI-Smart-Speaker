@@ -26,11 +26,10 @@ Alcuni link (Waveshare/Amazon) sono **reference/affiliate link**: se li usi per 
 Le opinioni e i test restano indipendenti.
 
 ---
-
 ## ✅ Funzionalità principali
-
 - ✅ **Wake word locale** (MicroWakeWord) – es: *Hey Jarvis / Hey Elsa / Hey Aura*
 - ✅ **Conversazione continua** (`voice_assistant.start_continuous`)
+- ✅ **V3 - Ring in Standby (ON/OFF)**
 - ✅ **Media player** con doppia pipeline:
   - `media_pipeline` (musica/stream)
   - `announcement_pipeline` (TTS/annunci)
