@@ -13,7 +13,7 @@ Configurazione **ESPHome** per trasformare la **Waveshare ESP32-S3 Audio Board /
 ### 🛒 Display 0.96 pollici Display OLED I2C SSD1306 Chip 128 x 64 Pixel I2C (V2 code)
 - **Amazon (affiliate link):** https://amzn.to/4ckoyOk
 
-### 🛒 Display LCD IPS da 1,28, scheda PCB nera, LCD IPS HD, driver GC9A01 (V3 code)
+### 🛒 Color Display LCD IPS da 1,28, scheda PCB nera, LCD IPS HD, driver GC9A01 (V3 code)
 - **Amazon (affiliate link):** https://amzn.to/4vn0eEn
 
 ### 🌐 HackMyHome
