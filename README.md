@@ -14,7 +14,7 @@ Configurazione **ESPHome** per trasformare la **Waveshare ESP32-S3 Audio Board /
 - **Amazon (affiliate link):** https://amzn.to/4ckoyOk
 
 ### 🛒 Color Display LCD IPS da 1,28, scheda PCB nera, LCD IPS HD, driver GC9A01 (V3 code)
-- **Amazon (affiliate link):** https://amzn.to/4vn0eEn
+- **Amazon (affiliate link):** https://amzn.to/4ckpC4M
 
 ### 🌐 HackMyHome
 - **GitHub (repo progetto):** https://github.com/MarcoFre/ESP32-S3-AI-Smart-Speaker/tree/main
