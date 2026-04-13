@@ -640,7 +640,7 @@ esphome:
   friendly_name: ${friendly}
   project:
     name: Waveshare HackMyHome.VoiceAssist
-    version: "0.0.5"
+    version: "3.0.1"
 
   on_boot:
     priority: 600
@@ -648,6 +648,17 @@ esphome:
       - logger.log:
           level: INFO
           format: "=== BOOT START"
+      - if:
+          condition:
+            lambda: return id(ring_standby);
+          then:
+          - light.turn_on:
+              id: led_ring
+              brightness: 55%
+              effect: "VA Standby"
+          else:
+          - light.turn_off:
+              id: led_ring
       - logger.log:
           level: INFO
           format: "=== BOOT END"
