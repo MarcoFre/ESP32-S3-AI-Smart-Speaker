@@ -503,8 +503,8 @@ script:
                 then:
                   - script.execute: led_waiting_wake
                 else:
-                - light.turn_off:
-                    id: led_ring
+                  - light.turn_off:
+                      id: led_ring
             - script.execute: start_wake_word
 
       # --- Fase: ascolto ---
@@ -652,13 +652,13 @@ esphome:
           condition:
             lambda: return id(ring_standby);
           then:
-          - light.turn_on:
-              id: led_ring
-              brightness: 55%
-              effect: "VA Standby"
+            - light.turn_on:
+                id: led_ring
+                brightness: 55%
+                effect: "VA Standby"
           else:
-          - light.turn_off:
-              id: led_ring
+            - light.turn_off:
+                id: led_ring
       - logger.log:
           level: INFO
           format: "=== BOOT END"
@@ -743,11 +743,11 @@ api:
       - logger.log:
           level: INFO
           format: "==== API CONNECTED"
-      - lambda: id(voice_assistant_phase) = ${connected_wireless_api};
-      - script.execute: control_leds
-      - delay: 2s
-      - script.execute: set_idle_or_mute_phase
-      - script.execute: start_wake_word
+      - lambda: |-
+          id(voice_assistant_phase) = ${connected_wireless_api};
+          id(va_running)  = false;
+          id(mp_running)  = false;
+          id(mww_running) = false;
       - script.execute: control_leds
 
   on_client_disconnected:
@@ -2062,9 +2062,16 @@ voice_assistant:
     - logger.log:
         level: INFO
         format: "==== VoiceAssistant: CLIENT CONNECTED ===="
-    - lambda: id(init_in_progress) = false;
+    - lambda: |-
+        id(init_in_progress) = false;
+        id(va_running)  = false;
+        id(mp_running)  = false;
+        id(mww_running) = false;
     - script.execute: set_idle_or_mute_phase
+    - script.execute: control_leds
+    - delay: 200ms
     - script.execute: start_wake_word
+    - delay: 100ms
     - script.execute: control_leds
 
   on_client_disconnected:
