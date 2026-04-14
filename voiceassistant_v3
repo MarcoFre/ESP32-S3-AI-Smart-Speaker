@@ -15,7 +15,7 @@ substitutions:
   dns:        "192.168.xxx.xxx"
   ssid:       "WiFi SSID"
 
-  # -------- LED ring --------
+     # -------- LED ring --------
   led_pin:    "GPIO38"
   led_count:  7
 
@@ -114,6 +114,31 @@ substitutions:
   speaker_name:        "spk_hw"
 
 globals:
+  - id: va_timer_active
+    type: bool
+    restore_value: no
+    initial_value: "false"
+
+  - id: va_timer_total_seconds
+    type: uint32_t
+    restore_value: no
+    initial_value: "0"
+
+  - id: va_timer_seconds_left
+    type: uint32_t
+    restore_value: no
+    initial_value: "0"
+
+  - id: va_timer_last_tick_ms
+    type: uint32_t
+    restore_value: no
+    initial_value: "0"
+
+  - id: va_timer_name
+    type: std::string
+    restore_value: no
+    initial_value: '""'
+
   - id: display_emotion_mode
     type: int
     restore_value: yes
@@ -797,6 +822,9 @@ font:
   - file: "gfonts://Roboto"
     id: font_timer_big
     size: 28
+  - file: "gfonts://Roboto"
+    id: font_timer_small
+    size: 14
 
 spi:
   clk_pin:  GPIO4
@@ -971,6 +999,110 @@ display:
       //     (uint8_t)((RING.blue + BG.blue) / 2)
       //   )
       // );
+
+      // ===== TIMER SCREEN =====
+      const bool timer_visible =
+          (id(va_timer_total_seconds) > 0) &&
+          (phase != ${voice_assist_timer_finished_phase_id});
+
+      if (timer_visible) {
+        uint32_t left = id(va_timer_seconds_left);
+
+        if (id(va_timer_active) &&
+            id(va_timer_last_tick_ms) > 0 &&
+            now > id(va_timer_last_tick_ms)) {
+          uint32_t elapsed_s = (now - id(va_timer_last_tick_ms)) / 1000UL;
+          left = (elapsed_s >= left) ? 0 : (left - elapsed_s);
+        }
+
+        uint32_t total = id(va_timer_total_seconds);
+        if (total == 0) total = 1;
+
+        float pct_left = clampf((float) left / (float) total, 0.0f, 1.0f);
+
+        Color TIMER_BG = Color(24, 36, 72);
+        Color TIMER_FG = Color(0, 220, 120);
+
+        if (!id(va_timer_active)) {
+          TIMER_FG = Color(100, 150, 230);
+        } else if (pct_left <= 0.50f) {
+          TIMER_FG = Color(255, 185, 0);
+        }
+
+        if (id(va_timer_active) && pct_left <= 0.20f) {
+          float pulse = 0.65f + 0.35f * ((sinf(now / 120.0f) + 1.0f) * 0.5f);
+          TIMER_FG = Color((uint8_t)(255 * pulse), (uint8_t)(70 * pulse), (uint8_t)(20 * pulse));
+        }
+
+        Color INNER_BG = Color(
+          (uint8_t)((BG.red   * 2 + BG_GLOW.red)   / 3),
+          (uint8_t)((BG.green * 2 + BG_GLOW.green) / 3),
+          (uint8_t)((BG.blue  * 2 + BG_GLOW.blue)  / 3)
+        );
+
+        const int cx = 120;
+        const int cy = 120;
+        const int r_outer = 110;
+        const int r_inner = 92;
+        const int step_deg = 4;
+        const int seg_count = 360 / step_deg;
+        const int seg_on = (int)(pct_left * seg_count + 0.5f);
+
+        it.filled_circle(cx, cy, 86, INNER_BG);
+        it.circle(cx, cy, 87, TIMER_BG);
+
+        for (int s = 0; s < seg_count; s++) {
+          float a = ((float)(s * step_deg) - 90.0f) * 0.01745329252f;
+
+          int x1 = cx + (int)(cosf(a) * r_inner);
+          int y1 = cy + (int)(sinf(a) * r_inner);
+          int x2 = cx + (int)(cosf(a) * r_outer);
+          int y2 = cy + (int)(sinf(a) * r_outer);
+
+          int x1b = cx + (int)(cosf(a) * (r_inner - 1));
+          int y1b = cy + (int)(sinf(a) * (r_inner - 1));
+          int x2b = cx + (int)(cosf(a) * (r_outer - 1));
+          int y2b = cy + (int)(sinf(a) * (r_outer - 1));
+
+          Color c = (s < seg_on) ? TIMER_FG : TIMER_BG;
+          it.line(x1, y1, x2, y2, c);
+          it.line(x1b, y1b, x2b, y2b, c);
+        }
+
+        char time_buf[16];
+        if (left >= 3600UL) {
+          snprintf(
+            time_buf, sizeof(time_buf), "%lu:%02lu:%02lu",
+            (unsigned long)(left / 3600UL),
+            (unsigned long)((left % 3600UL) / 60UL),
+            (unsigned long)(left % 60UL)
+          );
+        } else {
+          snprintf(
+            time_buf, sizeof(time_buf), "%02lu:%02lu",
+            (unsigned long)(left / 60UL),
+            (unsigned long)(left % 60UL)
+          );
+        }
+
+        if (id(va_timer_active)) {
+          it.printf(cx, 78, id(font_header), Color(190, 210, 255), TextAlign::CENTER, "TIMER");
+        } else {
+          it.printf(cx, 78, id(font_header), Color(190, 210, 255), TextAlign::CENTER, "TIMER IN PAUSA");
+        }
+
+        it.printf(cx, 118, id(font_timer_big), WHITE, TextAlign::CENTER, "%s", time_buf);
+
+        if (!id(va_timer_name).empty()) {
+          std::string label = id(va_timer_name);
+          if (label.length() > 22) {
+            label = label.substr(0, 22) + "...";
+          }
+          it.printf(cx, 152, id(font_timer_small), Color(170, 190, 230), TextAlign::CENTER, "%s", label.c_str());
+        }
+
+        return;
+      }
 
       // ===== target gaze =====
       float tx = 0.0f;
@@ -1775,21 +1907,6 @@ media_player:
             id: media_mixer_in
             decibel_reduction: 0
             duration: 1.2s
-        # FIX: ripristina la fase precedente solo se non è replying,
-        # altrimenti ricade su idle per evitare loop.
-        - lambda: |-
-            int prev = id(voice_assistant_phase_prev);
-            if (prev == ${voice_assist_replying_phase_id} || prev == ${no_connected})
-              prev = ${voice_assist_idle_phase_id};
-            id(voice_assistant_phase) = prev;
-        - script.execute: control_leds
-        - if:
-            condition:
-              lambda: |-
-                return id(voice_assistant_phase) == ${voice_assist_idle_phase_id} ||
-                       id(voice_assistant_phase) == ${voice_assist_muted_phase_id};
-            then:
-              - script.execute: start_wake_word
 
     on_pause:
       then:
@@ -2090,12 +2207,25 @@ voice_assistant:
     - logger.log:
         level: INFO
         format: "==== VoiceAssistant: TIMER STARTED ===="
+    - lambda: |-
+        id(va_timer_active) = timer.is_active;
+        id(va_timer_total_seconds) = timer.total_seconds;
+        id(va_timer_seconds_left) = timer.seconds_left;
+        id(va_timer_last_tick_ms) = millis();
+        id(va_timer_name) = timer.name;
+        id(display_awake_until) = millis() + 300000UL;
     - script.execute: control_leds
 
   on_timer_cancelled:
     - logger.log:
         level: INFO
         format: "==== VoiceAssistant: TIMER CANCELLED ===="
+    - lambda: |-
+        id(va_timer_active) = false;
+        id(va_timer_total_seconds) = 0;
+        id(va_timer_seconds_left) = 0;
+        id(va_timer_last_tick_ms) = 0;
+        id(va_timer_name).clear();
     - script.execute: set_idle_or_mute_phase
     - script.execute: control_leds
 
@@ -2103,15 +2233,54 @@ voice_assistant:
     - logger.log:
         level: INFO
         format: "==== VoiceAssistant: TIMER UPDATED ===="
+    - lambda: |-
+        id(va_timer_active) = timer.is_active;
+        id(va_timer_total_seconds) = timer.total_seconds;
+        id(va_timer_seconds_left) = timer.seconds_left;
+        id(va_timer_last_tick_ms) = millis();
+        id(va_timer_name) = timer.name;
+        id(display_awake_until) = millis() + 300000UL;
     - script.execute: control_leds
 
-  # FIX: on_timer_tick rimosso — il tick ogni secondo ridisegnava l'effect
-  # LED causando flicker. Il display aggiorna il timer autonomamente.
+  on_timer_tick:
+    - lambda: |-
+        if (timers.empty()) {
+          id(va_timer_active) = false;
+          id(va_timer_total_seconds) = 0;
+          id(va_timer_seconds_left) = 0;
+          id(va_timer_last_tick_ms) = 0;
+          id(va_timer_name).clear();
+          return;
+        }
+
+        int best = -1;
+        uint32_t best_left = 0xFFFFFFFF;
+
+        for (size_t i = 0; i < timers.size(); i++) {
+          if (timers[i].is_active && timers[i].seconds_left < best_left) {
+            best = (int)i;
+            best_left = timers[i].seconds_left;
+          }
+        }
+
+        if (best < 0) best = 0;
+
+        id(va_timer_active) = timers[best].is_active;
+        id(va_timer_total_seconds) = timers[best].total_seconds;
+        id(va_timer_seconds_left) = timers[best].seconds_left;
+        id(va_timer_last_tick_ms) = millis();
+        id(va_timer_name) = timers[best].name;
 
   on_timer_finished:
     - logger.log:
         level: INFO
         format: "==== VoiceAssistant: TIMER FINISHED ===="
+    - lambda: |-
+        id(va_timer_active) = false;
+        id(va_timer_total_seconds) = timer.total_seconds;
+        id(va_timer_seconds_left) = 0;
+        id(va_timer_last_tick_ms) = millis();
+        id(va_timer_name) = timer.name;
     - script.execute: play_timer_finished_sound
     - wait_until:
         condition:
@@ -2119,12 +2288,14 @@ voice_assistant:
         timeout: 1s
     - lambda: id(voice_assistant_phase) = ${voice_assist_timer_finished_phase_id};
     - script.execute: control_leds
-    # FIX: attende fine suono, poi ripristina fase e riavvia wake word
     - wait_until:
         condition:
           not:
             media_player.is_announcing: ${mediaplayer_name}
         timeout: 10s
+    - lambda: |-
+        id(va_timer_total_seconds) = 0;
+        id(va_timer_name).clear();
     - script.execute: set_idle_or_mute_phase
     - script.execute: start_wake_word
     - script.execute: control_leds
