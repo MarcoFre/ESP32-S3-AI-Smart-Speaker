@@ -6,7 +6,7 @@
 substitutions:
   device_name: home-assistant-voice-speaker
   friendly: "Home Assistant Voice Speaker"
-  fw_version: "4.0.1"
+  fw_version: "4.0.2"
 
   # -------- SECURITY --------
   password:   "WiFi Password"
@@ -428,7 +428,7 @@ media_player:
     volume_increment: 0.05
     volume_min: 0.4
     volume_max: 0.8
-    buffer_size: 1500000
+    buffer_size: 32000
 
     announcement_pipeline:
       speaker: announcement_resampling_speaker
