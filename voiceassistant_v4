@@ -1916,11 +1916,11 @@ script:
                         }
 
                         id(fw_latest_version) = latest;
-                        id(fw_update_available) = (latest != std::string("3.2.2"));
+                        id(fw_update_available) = (latest != std::string("${fw_version}" ));
 
                         ESP_LOGI("fw_check",
                                  "Local=%s Remote=%s Update=%d",
-                                 "3.2.2",
+                                 "${fw_version}",
                                  id(fw_latest_version).c_str(),
                                  (int) id(fw_update_available));
 
