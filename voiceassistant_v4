@@ -1,3 +1,8 @@
+# -------- HackMyHome Voice Assistant ===============================================================================
+# -------- Thanks to:
+# --------   Sanji78 for the code verification
+# --------   CaptaiMustard (core code is based on https://github.com/captainmustard/waveshare-s2-audio_esphome_voice)
+# --------- ===========================================================================================================
 substitutions:
   device_name: home-assistant-voice-speaker
   friendly: "Home Assistant Voice Speaker"
