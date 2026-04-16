@@ -6,7 +6,7 @@
 substitutions:
   device_name: home-assistant-voice-speaker
   friendly: "Home Assistant Voice Speaker"
-  fw_version: "3.2.2"
+  fw_version: "4.0.1"
 
   # -------- SECURITY --------
   password:   "WiFi Password"
@@ -444,11 +444,18 @@ media_player:
     on_announcement:
       - lambda: |-
           id(display_music_playing) = false;
+          id(display_awake_until) = millis() + 300000UL;
+    
+          if (id(voice_assistant_phase) == ${voice_assist_thinking_phase_id} ||
+              id(voice_assistant_phase) == ${voice_assist_waiting_for_command_phase_id} ||
+              id(voice_assistant_phase) == ${voice_assist_listening_for_command_phase_id}) {
+            id(voice_assistant_phase) = ${voice_assist_replying_phase_id};
+          }
+      - script.execute: control_leds
       - mixer_speaker.apply_ducking:
           id: media_mixing_input
           decibel_reduction: 20
           duration: 0.0s
-
     on_play:
       - lambda: |-
           id(display_music_playing) = true;
@@ -575,8 +582,6 @@ voice_assistant:
           # A nonempty x variable means a streaming TTS url was sent to the media player
           lambda: 'return !x.empty();'
         then:
-          - lambda: id(voice_assistant_phase) = ${voice_assist_replying_phase_id};
-          - script.execute: control_leds
           # Start a script that would potentially enable the stop word if the response is longer than a second
           - script.execute: activate_stop_word_once
   on_tts_start:
@@ -585,8 +590,6 @@ voice_assistant:
           # The intent_progress trigger didn't start the TTS Reponse
           lambda: 'return id(voice_assistant_phase) != ${voice_assist_replying_phase_id};'
         then:
-          - lambda: id(voice_assistant_phase) = ${voice_assist_replying_phase_id};
-          - script.execute: control_leds
           # Start a script that would potentially enable the stop word if the response is longer than a second
           - script.execute: activate_stop_word_once
   on_tts_end:
