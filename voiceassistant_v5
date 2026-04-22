@@ -1,4 +1,24 @@
+# -------- HackMyHome Voice Assistant ===============================================================================
+# -------- Thanks to:
+# --------   Sanji78 for the code verification
+# --------   CaptainMustard (core code is based on https://github.com/captainmustard/waveshare-s2-audio_esphome_voice)
+# --------- ===========================================================================================================
+substitutions:
+  device_name: home-assistant-voice-speaker
+  friendly: "Home Assistant Voice Speaker"
+  fw_version: "5.0.0"
 
+  # -------- SECURITY --------
+  password:   "WiFi Password"
+  api_key:    "CiNgQqOfbti7EO2MJWx+lGptEgBe9O2YHfdgdts26U4="
+  ota_key:    "777947954e176a894bb4402f586e789c"
+
+  # -------- WiFi --------
+  ip:         "192.168.xxx.xxx"
+  gateway:    "192.168.xxx.xxx"
+  subnet:     "255.255.255.0"
+  dns:        "192.168.xxx.xxx"
+  ssid:       "WiFi SSID"
 
 # -------- Voice Assistant Phases --------
   voice_assist_idle_phase_id:                   '1' # ready to be triggered by a wake word
