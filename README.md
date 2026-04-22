@@ -18,7 +18,7 @@ Il progetto nasce per la serie **HackMyHome Voice Assistant** e usa una logica a
 * [[**YouTube: HackMyHome**] ](https://www.youtube.com/@HMH-Aura-Nova)
 * [**Facebook: HackMyHome**](https://www.facebook.com/profile.php?id=61583821941006)
 ---
-## 🤝 Trasparenza
+# 🤝 Trasparenza
 Alcuni link Waveshare/Amazon possono essere **reference link o affiliate link**. Se li usi per acquistare, supporti il progetto **senza costi extra** per te.
 Le opinioni, i test e le configurazioni restano indipendenti.
 ---
