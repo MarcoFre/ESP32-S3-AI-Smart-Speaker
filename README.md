@@ -11,8 +11,6 @@ Il progetto nasce per la serie **HackMyHome Voice Assistant** e usa una logica a
 * **Amazon:** [https://amzn.to/40JLOQq](https://amzn.to/40JLOQq)
 ### 🛒 Display LCD IPS 1,28" GC9A01 / GC9A01A
 * **Amazon:** [https://amzn.to/4ckpC4M](https://amzn.to/4ckpC4M)
-### 🛒 Display OLED I2C SSD1306 0,96" 128×64
-* **Amazon:** [https://amzn.to/4ckoyOk](https://amzn.to/4ckoyOk)
 
 ### 🌐 HackMyHome
 * [**ESP32-S3 AI Smart Speaker: da “all-in-board” a "Voice Assistant" - Home Assistant:**](https://youtu.be/Lcp8FQ9NLyo)
