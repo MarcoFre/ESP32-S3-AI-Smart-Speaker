@@ -1,5 +1,6 @@
 # HackMyHome – ESP32-S3 AI Smart Speaker Development Board
 Configurazione **ESPHome** per trasformare la **Waveshare ESP32-S3 Audio Board / ESP32-S3 AI Smart Speaker Development Board** in un **Voice Assistant evoluto per Home Assistant**, con wake word locale, TTS, media player, mixer audio, display circolare, LED ring, timer, sveglia, modalità antifurto e controlli da Home Assistant.
+---
 Il progetto nasce per la serie **HackMyHome Voice Assistant** e usa una logica a stati per coordinare audio, microfono, wake word, display, LED ring e pulsanti fisici.
 ---
 ## 🔖 Versione
