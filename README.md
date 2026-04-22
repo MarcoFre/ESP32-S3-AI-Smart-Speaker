@@ -13,8 +13,8 @@ Il progetto nasce per la serie **HackMyHome Voice Assistant** e usa una logica a
 * **Amazon:** [https://amzn.to/4ckpC4M](https://amzn.to/4ckpC4M)
 
 ### 🌐 HackMyHome
-* [**ESP32-S3 AI Smart Speaker: da “all-in-board” a "Voice Assistant" - Home Assistant:**](https://youtu.be/Lcp8FQ9NLyo)
-* [**Aggiungiamo un Display Circolare! 📺✨:**](https://youtu.be/EsESK5aimu4)
+* [**ESP32-S3 AI Smart Speaker: da “all-in-board” a "Voice Assistant" - Home Assistant**](https://youtu.be/Lcp8FQ9NLyo)
+* [**Aggiungiamo un Display Circolare! 📺✨**](https://youtu.be/EsESK5aimu4)
 * [[**YouTube: HackMyHome**] ](https://www.youtube.com/@HMH-Aura-Nova)
 * [**Facebook: HackMyHome**](https://www.facebook.com/profile.php?id=61583821941006)
 ---
