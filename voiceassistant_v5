@@ -572,8 +572,9 @@ voice_assistant:
     - micro_wake_word.stop:
     - if:
         condition:
-          - lambda: return id(init_in_progress);
-          - switch.is_on: mic_mute_switch
+          and:
+            - lambda: return id(init_in_progress);
+            - switch.is_on: mic_mute_switch
         then:
           - switch.turn_off: mic_mute_switch
     - lambda: id(init_in_progress) = false;
