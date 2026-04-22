@@ -20,7 +20,7 @@ substitutions:
   dns:        "192.168.xxx.xxx"
   ssid:       "WiFi SSID"
 
-# -------- Voice Assistant Phases --------
+  # -------- Voice Assistant Phases --------
   voice_assist_idle_phase_id:                   '1' # ready to be triggered by a wake word
   voice_assist_waiting_for_command_phase_id:    '2' # waiting for a voice command after wake word
   voice_assist_listening_for_command_phase_id:  '3' # actively listening to user speech
@@ -2113,11 +2113,11 @@ globals:
     initial_value: "0"
 
 script:
-  - id: _trigger
+  - id: antifurto_trigger
     mode: restart
     then:
       - lambda: |-
-          id(_alarm_in_corso) = true;
+          id(antifurto_alarm_in_corso) = true;
           id(display_awake_until) = millis() + 300000UL;
           id(display_startled_until) = millis() + 4000UL;
       - script.execute: control_leds
@@ -2133,7 +2133,7 @@ script:
 
       - delay: 300ms
       - lambda: |-
-          id(_alarm_in_corso) = false;
+          id(antifurto_alarm_in_corso) = false;
       - script.execute: control_leds
 
   - id: start_va_from_wake_word
@@ -2269,7 +2269,7 @@ script:
           const bool improv_ble             = id(improv_ble_in_progress);
           const bool init_progress          = id(init_in_progress);
           const int  phase                  = id(voice_assistant_phase);
-          const bool               = id(sw_).state;
+          const bool antifurto              = id(sw_antifurto).state;
           const auto mp_state               = id(external_media_player).state;
           const bool announcement_playing   = mp_state == media_player::MediaPlayerState::MEDIA_PLAYER_STATE_ANNOUNCING;
           const bool media_playing          = mp_state == media_player::MediaPlayerState::MEDIA_PLAYER_STATE_PLAYING;
@@ -2339,8 +2339,8 @@ script:
           }
           if (!antifurto) {
             set("off", 0, 0, 0);
-            return;    
-          }
+            return;   
+          } 
           set("off", 0, 0, 0);
 
   - id: control_leds_volume_changed
