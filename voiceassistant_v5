@@ -2113,11 +2113,11 @@ globals:
     initial_value: "0"
 
 script:
-  - id: antifurto_trigger
+  - id: _trigger
     mode: restart
     then:
       - lambda: |-
-          id(antifurto_alarm_in_corso) = true;
+          id(_alarm_in_corso) = true;
           id(display_awake_until) = millis() + 300000UL;
           id(display_startled_until) = millis() + 4000UL;
       - script.execute: control_leds
@@ -2133,7 +2133,7 @@ script:
 
       - delay: 300ms
       - lambda: |-
-          id(antifurto_alarm_in_corso) = false;
+          id(_alarm_in_corso) = false;
       - script.execute: control_leds
 
   - id: start_va_from_wake_word
@@ -2269,7 +2269,7 @@ script:
           const bool improv_ble             = id(improv_ble_in_progress);
           const bool init_progress          = id(init_in_progress);
           const int  phase                  = id(voice_assistant_phase);
-          const bool antifurto              = id(sw_antifurto).state;
+          const bool               = id(sw_).state;
           const auto mp_state               = id(external_media_player).state;
           const bool announcement_playing   = mp_state == media_player::MediaPlayerState::MEDIA_PLAYER_STATE_ANNOUNCING;
           const bool media_playing          = mp_state == media_player::MediaPlayerState::MEDIA_PLAYER_STATE_PLAYING;
@@ -2340,6 +2340,7 @@ script:
           if (!antifurto) {
             set("off", 0, 0, 0);
             return;    
+          }
           set("off", 0, 0, 0);
 
   - id: control_leds_volume_changed
