@@ -3,8 +3,7 @@ Configurazione **ESPHome** per trasformare la **Waveshare ESP32-S3 Audio Board /
 ---
 Il progetto nasce per la serie **HackMyHome Voice Assistant** e usa una logica a stati per coordinare audio, microfono, wake word, display, LED ring e pulsanti fisici.
 ---
-## 🔖 Versione
-**Firmware:** `5.0.0`
+## 🔖 Versione **Firmware:** `5.0.0`
 ---
 ## 🔗 Link utili
 ### 🛒 ESP32-S3 AI Smart Speaker Development Board
