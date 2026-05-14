@@ -85,6 +85,14 @@ substitutions:
   disarm:           "disinserisci"
   alarm:            "antifurto"
 
+external_components:
+  - source:
+      type: git
+      url: https://github.com/sw3Dan/waveshare-s2-audio_esphome_voice
+      ref: main
+    components: [ es8311 ]
+    refresh: 0s
+
 esphome:
   name: $device_name
   friendly_name: $friendly
@@ -424,18 +432,6 @@ audio_adc:
     i2c_id: internal_i2c
     sample_rate: $i2s_sample_rate
     bits_per_sample: $i2s_bps_mic
-
-external_components:
-  - source: github://esphome/esphome@dev
-    components:
-      - micro_wake_word
-    refresh: 0s
-  - source:
-      type: git
-      url: https://github.com/sw3Dan/waveshare-s2-audio_esphome_voice
-      ref: main
-    components: [ es8311 ]
-    refresh: 0s
 
 audio_dac:
   - platform: es8311
