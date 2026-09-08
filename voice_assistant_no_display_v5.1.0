@@ -97,7 +97,7 @@ esphome:
   min_version: 2025.8.0
   compile_process_limit: 1
   project:
-    name: Waveshare HackMyHome.VoiceAssist.Headless
+    name: Waveshare HackMyHome.VoiceAssist_Headless
     version: ${fw_version}
 
   on_boot:
